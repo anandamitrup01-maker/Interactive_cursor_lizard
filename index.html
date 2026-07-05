@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natural Lizard Cursor Follower (Distance Maintained)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #dcd7c9; 
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            cursor: default; 
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const mouse = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2
+        };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        
+        const numSegments = 30; 
+        const segmentLength = 12; 
+        const segments = [];
+
+        
+        const maintainDistance = 100; 
+        let walkCycle = 0;
+
+        for (let i = 0; i < numSegments; i++) {
+            segments.push({
+                x: mouse.x - maintainDistance,
+                y: mouse.y,
+                angle: 0
+            });
+        }
+
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            
+            const head = segments[0];
+            const dxToMouse = mouse.x - head.x;
+            const dyToMouse = mouse.y - head.y;
+            const distanceToMouse = Math.sqrt(dxToMouse * dxToMouse + dyToMouse * dyToMouse);
+            
+            let targetX = mouse.x;
+            let targetY = mouse.y;
+
+            if (distanceToMouse > 0) {
+                const angleToMouse = Math.atan2(dyToMouse, dxToMouse);
+                targetX = mouse.x - Math.cos(angleToMouse) * maintainDistance;
+                targetY = mouse.y - Math.sin(angleToMouse) * maintainDistance;
+            }
+
+            
+            if (distanceToMouse > maintainDistance + 5) {
+                walkCycle += 0.2; 
+            }
+
+            for (let i = 0; i < numSegments; i++) {
+                const seg = segments[i];
+                
+                const dx = targetX - seg.x;
+                const dy = targetY - seg.y;
+                seg.angle = Math.atan2(dy, dx);
+
+                seg.x += (targetX - Math.cos(seg.angle) * segmentLength - seg.x) * 0.35;
+                seg.y += (targetY - Math.sin(seg.angle) * segmentLength - seg.y) * 0.35;
+
+                targetX = seg.x;
+                targetY = seg.y;
+            }
+
+            for (let i = numSegments - 1; i >= 0; i--) {
+                const seg = segments[i];
+                
+                ctx.save();
+                ctx.translate(seg.x, seg.y);
+                ctx.rotate(seg.angle);
+
+                ctx.fillStyle = '#4a533c'; 
+                ctx.strokeStyle = '#383f2e';
+                ctx.lineWidth = 1.5;
+
+                let thickness = 0;
+                if (i < 5) {
+                    thickness = Math.sin((i / 5) * Math.PI / 2) * 6 + 12;
+                } else if (i >= 5 && i < 15) {
+                    thickness = Math.sin(((i - 5) / 10) * Math.PI) * 10 + 15;
+                } else {
+                    thickness = Math.max(1, 15 * (1 - (i - 15) / (numSegments - 15)));
+                }
+
+                if (i === 6 || i === 13) {
+                    ctx.save();
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = '#4a533c';
+
+                    let sideOffset = (i === 6) ? 0 : Math.PI;
+                    let legSwing = Math.sin(walkCycle + sideOffset) * 15;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, -thickness / 2);
+                    ctx.lineTo(-5 + legSwing, -thickness - 12); 
+                    ctx.lineTo(5 + legSwing, -thickness - 18); 
+                    ctx.stroke();
+
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, thickness / 2);
+                    ctx.lineTo(-5 - legSwing, thickness + 12);  
+                    ctx.lineTo(5 - legSwing, thickness + 18);   
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+
+                if (i === 0) {
+                    ctx.beginPath();
+                    ctx.ellipse(8, 0, 16, 12, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#d4a373'; 
+                    ctx.beginPath();
+                    ctx.arc(10, -6, 2.5, 0, Math.PI * 2);
+                    ctx.arc(10, 6, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(10, -6, 1, 0, Math.PI * 2);
+                    ctx.arc(10, 6, 1, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, thickness / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    if (i > 4 && i < 16 && i % 2 === 0) {
+                        ctx.strokeStyle = '#626d52';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -thickness/3);
+                        ctx.lineTo(0, thickness/3);
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.restore();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
