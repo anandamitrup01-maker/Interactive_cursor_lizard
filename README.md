@@ -40,3 +40,7 @@ Move your mouse around the screen and watch the lizard follow it with smooth, li
 - Responsive Canvas
 - Procedural Animation
 
+  🔗 Code: https://github.com/anandamitrup01-maker/Interactive_cursor_lizard/blob/main/index.html
+
+  🌐 Live: 
+
